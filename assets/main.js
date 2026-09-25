@@ -282,7 +282,15 @@
     // h1 pierwszego ekranu (hero) — jedyny ruch, jaki hero dostaje
     var h1 = document.querySelector('section h1, header h1, .hero h1, .hero-cine h1');
     if (h1 && !splitLines(h1)) { h1.classList.add('mt-fade'); }
-    if (h1) { requestAnimationFrame(function () { h1.classList.add('mt-in'); }); }
+    if (h1) {
+      var pokazH1 = function () { requestAnimationFrame(function () { h1.classList.add('mt-in'); }); };
+      // przy ekranie wejścia nagłówek wjeżdża razem z odsłoną, nie pod zasłoną
+      if (document.documentElement.classList.contains('intro-on')) {
+        document.addEventListener('wejscie:odslona', pokazH1, { once: true });
+        document.addEventListener('wejscie:koniec', pokazH1, { once: true });
+        setTimeout(pokazH1, 2200);
+      } else pokazH1();
+    }
 
     // nagłówki sekcji — wchodzą, gdy sekcja pojawia się w oknie
     var heads = all('.head h2').filter(function (h) { return !firstScreen(h); });

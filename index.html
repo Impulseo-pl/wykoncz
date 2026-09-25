@@ -3,6 +3,21 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preload" as="image" href="img/logo-ciemne.png" fetchpriority="high">
+<link rel="preload" as="image" href="img/logo-jasne.png" fetchpriority="high">
+<script>
+/* Ekran wejścia: w <head> BEZ defer - z defer przez ułamek sekundy widać stronę przed kurtyną. */
+(function(){
+  try{
+    if (matchMedia('(prefers-reduced-motion:reduce)').matches) return;
+    if (location.search.indexOf('intro') < 0) {
+      try { if (sessionStorage.getItem('wykoncz-intro')) return;
+            sessionStorage.setItem('wykoncz-intro','1'); } catch(e){}
+    }
+    document.documentElement.classList.add('intro-on');
+  }catch(e){}
+})();
+</script>
 <title>Wykończ! - remonty i wykończenia wnętrz</title>
 <meta name="description" content="Remonty mieszkań w Stalowej Woli: łazienki od podstaw, glazura i terakota, wykończenia pod klucz. Wycena i termin przed robotą. Zadzwoń: +48 692 375 683.">
 <link rel="canonical" href="https://kris20032.github.io/wykoncz/">
@@ -21,14 +36,15 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/styles.css?v=9f502fff">
+<link rel="stylesheet" href="assets/styles.css?v=74247b15">
 <meta name="nb-deploy" content="bb717f656394">
 </head>
 <body>
+<div id="intro" aria-hidden="true"><span class="i-pas"></span></div>
 
 <header class="nav">
   <div class="wrap nav-inner">
-    <a class="brand brand-has-logo" href="index.html"><img class="brand-logo" src="img/logo.jpg" alt="Wykończ!" width="720" height="720" decoding="async"></a>
+    <a class="brand brand-has-logo" href="index.html"><span class="brand-mark"><img class="brand-logo" src="img/logo-jasne.png" alt="Wykończ!" width="915" height="213" fetchpriority="high"><img class="bl-ciemne" src="img/logo-ciemne.png" alt="" aria-hidden="true" width="915" height="213" decoding="async"></span></a>
     <nav class="nav-links">
       <a href="oferta.html">Oferta</a>
       <a href="realizacje.html">Realizacje</a>
@@ -39,19 +55,112 @@
     <button class="nav-toggle" aria-label="Menu"><span></span><span></span><span></span></button>
   </div>
 </header>
+<script>
+/* Pomiar logo i sterowanie wejściem - TUŻ ZA </header> (z main.js ruszałoby ~300 ms później). */
+(function(){
+  var h = document.documentElement;
+  if (!h.classList.contains('intro-on')) return;
+  var brand = document.querySelector('.nav .brand'),
+      mark  = document.querySelector('.nav .brand-mark'),
+      nav   = document.querySelector('.nav');
+  var obrazy = mark ? mark.querySelectorAll('img') : [];
+  function sprzataj(){
+    h.classList.remove('intro-on','intro-znak','intro-gra','intro-out');
+    try { document.dispatchEvent(new CustomEvent('wejscie:koniec')); } catch(e){}
+  }
+  if (!brand || !mark || !nav || obrazy.length < 2) { sprzataj(); return; }
+
+  /* Nic nie rusza, dopóki OBA pliki logo nie są pobrane i zdekodowane -
+     inaczej maska grałaby na pustym miejscu. Nie doczekamy się - pokazujemy stronę bez wejścia. */
+  var CZEKANIE = 1400, ruszylo = false, odpuszczone = false;
+  function pobrane(){ for (var i=0;i<obrazy.length;i++){ if(!(obrazy[i].complete && obrazy[i].naturalWidth>0)) return false; } return true; }
+  function odpusc(){ if (ruszylo || odpuszczone) return; odpuszczone = true; sprzataj(); }
+  function graj(){ if (!ruszylo && !odpuszczone) { ruszylo = true; wejscie(); } }
+  function zacznij(){
+    if (ruszylo || odpuszczone || !pobrane()) return;
+    var d = [];
+    for (var i=0;i<obrazy.length;i++){ if (obrazy[i].decode) d.push(obrazy[i].decode()); }
+    if (d.length && window.Promise) Promise.all(d).then(graj, graj); else graj();
+  }
+  if (pobrane()) zacznij();
+  else {
+    for (var i=0;i<obrazy.length;i++){
+      obrazy[i].addEventListener('load', zacznij);
+      obrazy[i].addEventListener('error', odpusc);
+    }
+    setTimeout(function(){ if (pobrane()) zacznij(); else odpusc(); }, CZEKANIE);
+  }
+
+  function wejscie(){
+    var r = mark.getBoundingClientRect(), br = brand.getBoundingClientRect();
+    if (!r.width || !r.height) { sprzataj(); return; }
+    /* Sufit z pikseli pliku (915) przez gęstość ekranu - powyżej logo byłoby miękkie. */
+    var sufit = 915 / Math.min(window.devicePixelRatio || 1, 3);
+    var cel = (innerWidth < 680) ? Math.min(innerWidth * 0.74, 330) : Math.min(innerWidth * 0.4, 470);
+    cel = Math.max(r.width, Math.min(cel, sufit));
+    h.style.setProperty('--i-w', Math.round(cel) + 'px');
+    h.style.setProperty('--i-h', Math.round(cel * r.height / r.width) + 'px');
+    h.style.setProperty('--i-zmniejsz', (r.width / cel).toFixed(4));
+    h.style.setProperty('--i-baza-w', Math.round(br.width) + 'px');
+    h.style.setProperty('--i-baza-h', Math.round(br.height) + 'px');
+    h.style.setProperty('--i-px', Math.round(r.left + r.width / 2 - innerWidth / 2) + 'px');
+    h.style.setProperty('--i-py', Math.round(r.top + r.height / 2 - innerHeight / 2) + 'px');
+    h.classList.add('intro-znak');
+    /* Korekta, gdyby jakiś przodek stał się blokiem odniesienia dla position:fixed. */
+    var m = mark.getBoundingClientRect();
+    var kx = innerWidth / 2 - (m.left + m.width / 2), ky = innerHeight / 2 - (m.top + m.height / 2);
+    if (Math.abs(kx) > 1 || Math.abs(ky) > 1) {
+      h.style.setProperty('--i-kx', Math.round(kx) + 'px');
+      h.style.setProperty('--i-ky', Math.round(ky) + 'px');
+    }
+
+    var zdjete = false;
+    function koniec(){
+      if (zdjete) return; zdjete = true;
+      h.classList.add('intro-out');
+      try { document.dispatchEvent(new CustomEvent('wejscie:odslona')); } catch(e){}
+      setTimeout(sprzataj, 900);
+    }
+    /* DWIE klatki - po jednej przeglądarka skleiłaby stan startowy z końcowym. */
+    requestAnimationFrame(function(){ requestAnimationFrame(function(){
+      h.classList.add('intro-gra');
+      /* Zasłona schodzi, gdy gotowe jest HERO, nie po window.load (czeka na wszystkie zdjęcia). */
+      var start = Date.now(), MIN = 560, SUFIT = 820, zaladowane = false, hero = null;
+      function heroGotowe(){
+        if (!hero) hero = document.querySelector('.hf-photo');
+        return !!(hero && hero.complete && hero.naturalWidth > 0);
+      }
+      function moze(){
+        if (zdjete) return;
+        if (Date.now() - start >= MIN && (heroGotowe() || zaladowane)) koniec();
+        else setTimeout(moze, 70);
+      }
+      window.addEventListener('load', function(){ zaladowane = true; moze(); });
+      moze();
+      setTimeout(koniec, SUFIT);
+    }); });
+    /* Bezpieczniki niezależne od klatek (karta w tle wstrzymuje requestAnimationFrame). */
+    setTimeout(koniec, 1900);
+    setTimeout(sprzataj, 3000);
+    ['click','wheel','touchstart','keydown'].forEach(function(z){
+      window.addEventListener(z, koniec, {passive:true});
+    });
+  }
+})();
+</script>
 
 <main>
 <section class="hero-fach">
   <img class="hf-photo" src="img/hero.jpg" fetchpriority="high" data-rotate="img/g2.jpg|img/g4.jpg" alt="Wykończ!" width="1880" height="1255">
   <div class="hf-panel">
     <div class="hf-inner">
-      <span class="hf-kicker">Remonty i wykończenia wnętrz</span>
-      <h1 class="hf-title">Remonty i wykończenia wnętrz. Stalowa Wola i okolice. <em></em></h1>
+      <span class="hf-kicker">Stalowa Wola i okolice</span>
+      <h1 class="hf-title">Remonty i wykończenia wnętrz <em>pod klucz</em></h1>
       <p class="hf-lead">Stan deweloperski albo mieszkanie po babci - biorę oba i doprowadzam do wprowadzki.</p>
       <a class="hf-phone" href="tel:+48692375683"><span class="hf-phone-lab">Zadzwoń teraz</span><span class="hf-phone-num"><svg class="ico-tel" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6.6 10.8a15.5 15.5 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.24 11.4 11.4 0 0 0 3.6.58 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.46.58 3.6a1 1 0 0 1-.25 1l-2.23 2.2Z" fill="currentColor"/></svg> +48 692 375 683</span></a>
       <div class="hf-actions">
         <a href="kontakt.html" class="btn btn-accent">Zadzwoń po wycenę <span class="arr">→</span></a>
-        <a href="tel:+48692375683" class="btn btn-ghost hf-ghost">Zadzwoń +48 692 375 683</a>
+        <a href="realizacje.html" class="btn btn-ghost hf-ghost">Zobacz realizacje</a>
       </div>
       <div class="hf-trust"><svg class="ico-star" width="14" height="14" viewBox="0 0 24 24" style="vertical-align:-2px" aria-hidden="true"><path d="M12 2.8l2.85 5.8 6.4.93-4.63 4.5 1.1 6.37L12 17.4l-5.72 3 1.1-6.37-4.63-4.5 6.4-.93L12 2.8Z" fill="currentColor"/></svg> Ocena 5,0 w Google</div>
     </div>
@@ -201,7 +310,7 @@
   <div class="wrap">
     <div class="foot-grid">
       <div class="foot-brand">
-        <div class="name">Wykończ!</div>
+        <img class="foot-logo" src="img/logo-jasne.png" alt="Wykończ!" width="915" height="213" loading="lazy" decoding="async">
         <p>Stan deweloperski albo mieszkanie po babci - biorę oba i doprowadzam do wprowadzki.</p>
       </div>
       <div class="foot-col">
@@ -231,6 +340,6 @@
 <div class="sticky-call"><a class="sc-call" href="tel:+48692375683"><svg class="ico-tel" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6.6 10.8a15.5 15.5 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.24 11.4 11.4 0 0 0 3.6.58 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.46.58 3.6a1 1 0 0 1-.25 1l-2.23 2.2Z" fill="currentColor"/></svg> Zadzwoń</a><a class="sc-quote" href="kontakt.html">Zadzwoń po wycenę</a></div>
 <div class="demo-wazne" data-do="2026-10-01" data-cykl="3" hidden><svg class="dw-ico" width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="8.6" stroke="currentColor" stroke-width="1.8"/><path d="M12 7.2V12l3.3 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><span class="dw-txt"></span></div>
 
-<script src="assets/main.js"></script>
+<script src="assets/main.js?v=b0ee339d"></script>
 </body>
 </html>

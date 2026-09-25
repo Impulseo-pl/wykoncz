@@ -1840,10 +1840,115 @@ footer{view-transition-name:mt-foot}
 
 
 /* === auto-paleta z marki klienta (źródło: logo) === */
-:root{--accent:#4973A1;--accent-d:#355E8B;--accent-soft:rgba(73,115,161,0.10);--paper:#F8FAFD;--paper-2:#ECF1F5;--paper-3:#E1E7ED;--ink:#1C2127;--ink-soft:#424850;--muted:#777C83;--line:rgba(28,33,39,.12);}
-.btn-accent{color:#fff}
-.nav .nav-links a.btn-accent{color:#fff}
-.btn-accent[data-accent-d],.cta-d .btn-accent{color:#fff}
+:root{--accent:#F66610;--accent-d:#B84508;--accent-soft:rgba(246,102,16,0.12);--paper:#F8FAFD;--paper-2:#EDF1F6;--paper-3:#E2E8F0;--ink:#0E1E30;--ink-soft:#2F4157;--muted:#5D6778;--line:rgba(14,30,48,.12);--dark:#00264A;}
+/* Paleta z LOGO klienta (granat #00264A + pomarańcz wałka #F66610). Biały napis na pomarańczu = 3,08 (FAIL),
+   granatowy = 5,41 (PASS) - dlatego przycisk w spoczynku ma granatowy tekst, a w hoverze ciemny pomarańcz + biel (5,39). */
+.btn-accent{color:#0A1F36}
+.nav .nav-links a.btn-accent{color:#0A1F36}
+.btn-accent[data-accent-d],.cta-d .btn-accent{color:#0A1F36}
 
 /* === szary tekst dociągnięty do czytelności (WCAG 4.5 na wszystkich tłach) === */
 :root{--muted:#63676D;}
+
+
+/* ============================================================
+   SZATA MARKI WYKOŃCZ! (poprawka 25.09.2026, prośba Szymona)
+   Logo poziome z realnego znaku klienta: wersja jasna nad zdjęciem hero,
+   granatowa na jasnym pasku po przewinięciu. Dwie warstwy przenikają się.
+   ============================================================ */
+.brand-mark{position:relative;display:block;height:46px;aspect-ratio:915/213;flex:none}
+.brand-mark img{position:absolute;inset:0;width:100%;height:100%;max-width:none;object-fit:contain;display:block;
+  transition:opacity .35s ease}
+.nav .brand-mark .brand-logo{height:100%;max-width:none}
+.bl-ciemne{opacity:0}
+.nav.nav-solid .bl-ciemne{opacity:1}
+.nav.nav-solid .brand-mark .brand-logo{opacity:0}
+.nav.is-stuck .brand-mark{height:42px}
+@media(max-width:680px){.brand-mark{height:36px}.nav.is-stuck .brand-mark{height:34px}}
+/* Menu mobilne ma jasny panel - logo w granacie, gdy panel otwarty */
+@media(max-width:680px){
+  .nav:has(.nav-links.open) .bl-ciemne{opacity:1}
+  .nav:has(.nav-links.open) .brand-mark .brand-logo{opacity:0}
+}
+
+/* Stopka: logo zamiast samego napisu (na granacie wygląda jak oryginał z FB) */
+.foot-logo{display:block;height:58px;width:auto;max-width:100%}
+
+/* Hero: zasłona w granacie marki zamiast neutralnej szarości */
+.hero-fach::after{background:linear-gradient(102deg,rgba(0,22,44,.88) 0%,rgba(0,24,48,.78) 30%,rgba(0,26,52,.5) 55%,rgba(0,28,56,.18) 78%,rgba(0,28,56,.04) 100%)}
+@media(max-width:820px){
+  .hero-fach::after{background:linear-gradient(178deg,rgba(0,22,44,.5) 0%,rgba(0,22,44,.66) 45%,rgba(0,20,40,.9) 100%)}
+}
+/* Kreski przy nadtytułach jak pas farby z wałka - grubsze, pomarańczowe */
+.eyebrow::before{height:3px;border-radius:2px;background:var(--accent)}
+.hf-kicker{color:#FFD3B3}
+.hf-phone-lab{color:rgba(255,255,255,.84)}
+.hf-kicker::before{height:3px;border-radius:2px;background:var(--accent)}
+.hf-title em{color:#FF9A52}
+/* Sekcje ciemne w granacie z delikatną poświatą w kolorze wałka */
+.cta{background:radial-gradient(120% 140% at 100% 0%,rgba(246,102,16,.16),transparent 55%),var(--dark)}
+.cta .eyebrow{color:#FFB27A}
+
+/* ============================================================
+   EKRAN WEJŚCIA (kurtyna z logo) - TYLKO strona główna, raz na wizytę.
+   `?intro` w adresie = zagraj jeszcze raz (do pokazywania klientowi).
+   Motyw z logo: pomarańczowy pas jak jedno pociągnięcie wałkiem, potem jasna
+   płachta zjeżdża w dół i odsłania stronę, a logo leci do paska.
+   Bezpieczniki: zasłona domyślnie display:none (włącza ją skrypt), twarde
+   timery 1,9 s / 3 s, klik-scroll-dotyk-klawisz przerywa, reduced-motion pomija.
+   ⛔ Zero drop-shadow na logo (iOS rysuje jasny prostokąt) - lista filtrów = samo blur.
+   ============================================================ */
+#intro{display:none}
+.intro-on #intro{
+  display:block;position:fixed;inset:0;z-index:300;background:var(--paper);
+  transform:translateY(0);transition:transform .72s cubic-bezier(.66,0,.24,1)}
+.intro-on #intro::before{content:"";position:absolute;left:0;right:0;bottom:100%;height:56px;
+  background:linear-gradient(to top,rgba(0,38,74,.14),rgba(0,38,74,0))}
+.intro-on.intro-out #intro{transform:translateY(100%);pointer-events:none}
+.intro-on body{overflow:hidden}
+
+/* Drugi takt: pas farby z wałka (od lewej do prawej) */
+.i-pas{position:absolute;left:50%;top:50%;width:calc(var(--i-w,300px) * .9);height:7px;border-radius:4px;
+  background:linear-gradient(90deg,#E85A0C,#F66610 40%,#FF8A3D);
+  transform-origin:left center;opacity:0;
+  transform:translate(-50%,calc(var(--i-h,70px) / 2 + 24px)) scaleX(0)}
+.intro-on.intro-gra .i-pas{opacity:1;transform:translate(-50%,calc(var(--i-h,70px) / 2 + 24px)) scaleX(1);
+  transition:transform .46s cubic-bezier(.16,1,.3,1) .14s,opacity .12s linear .14s}
+.intro-on.intro-out .i-pas{opacity:0;transition:opacity .2s linear}
+
+/* Pasek nad zasłoną, widoczne z niego tylko logo. Bez backdrop-filter (iOS). */
+.intro-znak .nav{z-index:301;-webkit-backdrop-filter:none;backdrop-filter:none;background:transparent}
+.intro-znak .nav .brand{overflow:visible;width:var(--i-baza-w);height:var(--i-baza-h);flex:0 0 auto}
+/* Cień paska (czytelność menu na zdjęciu) nie może leżeć na jasnej płachcie; zanim logo
+   zostanie zmierzone, cały pasek jest schowany (inaczej wystaje nad zasłonę). */
+.intro-on .nav::after,.intro-on .nav-links,.intro-on .nav-toggle{opacity:0}
+.intro-on:not(.intro-znak) .brand-mark{opacity:0}
+.intro-on.intro-out .nav::after{opacity:1;transition:opacity .4s ease .3s}
+.intro-on.intro-out .nav-links,.intro-on.intro-out .nav-toggle{opacity:1;transition:opacity .5s ease .35s}
+
+/* Logo: maska + rozmycie schodzące do ostrości (nie fade+scale). Rozmiar na kurtynie
+   to PRAWDZIWY width/height, powrót do paska = scale < 1 (bez rozmycia na telefonie). */
+.intro-znak .brand-mark{
+  position:fixed;left:calc(50% + var(--i-kx,0px));top:calc(50% + var(--i-ky,0px));z-index:2;
+  width:var(--i-w);height:var(--i-h);aspect-ratio:auto;
+  transform:translate(-50%,-50%) scale(1.045);
+  clip-path:inset(0 100% 0 0);filter:blur(14px)}
+.intro-znak.intro-gra .brand-mark{
+  transform:translate(-50%,-50%) scale(1);clip-path:inset(0 0 0 0);filter:blur(0px);
+  transition:transform .5s cubic-bezier(.16,1,.3,1),clip-path .5s cubic-bezier(.16,1,.3,1),filter .5s cubic-bezier(.16,1,.3,1)}
+.intro-znak.intro-out .brand-mark{
+  transform:translate(calc(-50% + var(--i-px)),calc(-50% + var(--i-py))) scale(var(--i-zmniejsz));
+  filter:blur(0px);transition:transform .72s cubic-bezier(.16,.84,.44,1)}
+/* Na jasnej płachcie logo granatowe; w locie, gdy mija krawędź zasłony, przechodzi w jasne */
+.intro-znak .brand-mark .bl-ciemne{opacity:1}
+.intro-znak .brand-mark .brand-logo{opacity:0}
+.intro-znak.intro-out .brand-mark .bl-ciemne{opacity:0;transition:opacity .22s linear .15s}
+.intro-znak.intro-out .brand-mark .brand-logo{opacity:1;transition:opacity .22s linear .15s}
+
+@media (prefers-reduced-motion:reduce){
+  .intro-on #intro{display:none}
+  .intro-on body{overflow:auto}
+  .intro-znak .brand-mark{position:relative;left:auto;top:auto;width:auto;height:46px;aspect-ratio:915/213;
+    transform:none!important;filter:none!important;clip-path:none!important}
+  .intro-on .nav-links,.intro-on .nav-toggle,.intro-on .nav::after,.intro-on .brand-mark{opacity:1}
+}
